@@ -22,6 +22,8 @@ class Tetris extends StatefulWidget {
 }
 
 class _TetrisState extends State<Tetris> {
+  final GlobalKey<GameState> _keyGame = GlobalKey();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -44,7 +46,9 @@ class _TetrisState extends State<Tetris> {
                     flex: 3,
                     child: Padding(
                         padding: const EdgeInsets.fromLTRB(10, 10, 5, 10),
-                        child: Game())),
+                        child: Game(
+                          key: _keyGame,
+                        ))),
                 Flexible(
                     flex: 1,
                     child: Padding(
@@ -57,11 +61,21 @@ class _TetrisState extends State<Tetris> {
                               height: 30,
                             ),
                             ElevatedButton(
-                                onPressed: () {},
+                                onPressed: () {
+                                  setState(() {
+                                    _keyGame.currentState != null &&
+                                            _keyGame.currentState!.isPlaying
+                                        ? _keyGame.currentState!.endGame()
+                                        : _keyGame.currentState!.startGame();
+                                  });
+                                },
                                 style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.indigo[700]),
                                 child: Text(
-                                  'Start',
+                                  _keyGame.currentState != null &&
+                                          _keyGame.currentState!.isPlaying
+                                      ? 'End'
+                                      : 'Start',
                                   style: TextStyle(
                                       fontSize: 18, color: Colors.grey[200]),
                                 )),
