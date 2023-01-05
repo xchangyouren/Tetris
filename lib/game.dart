@@ -3,9 +3,13 @@ import 'package:my_tetris/blcok.dart';
 import 'dart:math';
 import 'dart:async';
 
+import 'package:my_tetris/sub_block.dart';
+
+enum Collision { LANDED, LANDED_BLOCK, HIT_WALL, HIT_BLOCK, NONE }
+
 const BLOCKS_X = 10;
 const BLOCKS_Y = 20;
-const REFRESH_GAME = 1;
+const REFRESH_GAME = 300;
 const GAME_AREA_BORDER_WIDTH = 2.0;
 const SUB_BLOCK_EDGE_WIDTH = 2.0;
 
@@ -19,13 +23,15 @@ class Game extends StatefulWidget {
 
 class GameState extends State<Game> {
   late double subBlockWidth;
-  Duration duration = const Duration(seconds: REFRESH_GAME);
+  Duration duration = const Duration(milliseconds: REFRESH_GAME);
 
   final GlobalKey _keyGameArea = GlobalKey();
 
+  BlockMovement? action;
   Block? block;
   late Timer timer;
   bool isPlaying = false;
+  List<SubBlock> oldSubBlocks = <SubBlock>[];
 
   Block getNewBlock() {
     int blockType = Random().nextInt(7);
@@ -50,10 +56,79 @@ class GameState extends State<Game> {
     }
   }
 
+  bool checkAtBottom() {
+    return (block?.y)! + block?.height >= BLOCKS_Y;
+  }
+
+  bool checkAboveBlock() {
+    for (var oldSubBlock in oldSubBlocks) {
+      for (var subBlock in block?.subBlocks) {
+        var x = subBlock.x + block?.x;
+        var y = subBlock.y + block?.y;
+        if (x == oldSubBlock.x && y + 1 == oldSubBlock.y) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  bool checkOnEdge(BlockMovement action) {
+    return action == BlockMovement.LEFT && (block?.x)! <= 0 ||
+        action == BlockMovement.RIGHT && (block?.x)! + block?.width >= BLOCKS_X;
+  }
+
   void onPlay(Timer timer) {
     // debugPrint('onPlay called ${timer.tick}');
+    var status = Collision.NONE;
     setState(() {
-      block?.move(BlockMovement.DOWN);
+      if (action != null && !checkOnEdge(action!)) {
+        block?.move(action!);
+      }
+
+      for (var oldSubBlock in oldSubBlocks) {
+        block?.subBlocks.forEach((subBlock) {
+          var x = subBlock.x + block?.x;
+          var y = subBlock.y + block?.y;
+          if (x == oldSubBlock.x && y == oldSubBlock.y) {
+            switch (action) {
+              case BlockMovement.LEFT:
+                block?.move(BlockMovement.RIGHT);
+                break;
+              case BlockMovement.RIGHT:
+                block?.move(BlockMovement.LEFT);
+                break;
+              case BlockMovement.ROTATE_CLOCKWISE:
+                block?.move(BlockMovement.ROTATE_COUNTER_CLOCKWISE);
+                break;
+              case BlockMovement.ROTATE_COUNTER_CLOCKWISE:
+                block?.move(BlockMovement.ROTATE_CLOCKWISE);
+                break;
+              default:
+                break;
+            }
+          }
+        });
+      }
+
+      if (checkAtBottom()) {
+        status = Collision.LANDED;
+      } else if (checkAboveBlock()) {
+        status = Collision.LANDED_BLOCK;
+      } else {
+        block?.move(BlockMovement.DOWN);
+      }
+
+      if (status == Collision.LANDED || status == Collision.LANDED_BLOCK) {
+        block?.subBlocks.forEach((subBlock) {
+          subBlock.x += block?.x;
+          subBlock.y += block?.y;
+          oldSubBlocks.add(subBlock);
+        });
+        block = getNewBlock();
+      }
+
+      action = null;
     });
   }
 
@@ -66,7 +141,7 @@ class GameState extends State<Game> {
         'renderBoxGame position and size: ${position.dx} - ${position.dy} : ${renderBoxGame.size.width} ${renderBoxGame.size.height}');
     subBlockWidth =
         (renderBoxGame.size.width - GAME_AREA_BORDER_WIDTH * 2) / BLOCKS_X;
-    block = getNewBlock();
+    block ??= getNewBlock();
     // debugPrint('subBlockWidth: $subBlockWidth, ${block?.x}-${block?.y}');
     timer = Timer.periodic(duration, onPlay);
   }
@@ -103,6 +178,12 @@ class GameState extends State<Game> {
       subBlocks.add(getPositionedSquareContainer(
           subBlock.color, subBlock.x + block!.x, subBlock.y + block!.y));
     });
+
+    for (var oldSubBlock in oldSubBlocks) {
+      subBlocks.add(getPositionedSquareContainer(
+          oldSubBlock.color, oldSubBlock.x, oldSubBlock.y));
+    }
+
     // debugPrint('drawBlocks: ${subBlocks[0].left}-${subBlocks[0].top}');
     return Stack(
       children: subBlocks,
@@ -111,18 +192,27 @@ class GameState extends State<Game> {
 
   @override
   Widget build(BuildContext context) {
-    return AspectRatio(
-      aspectRatio: BLOCKS_X / BLOCKS_Y,
-      child: Container(
-        key: _keyGameArea,
-        decoration: BoxDecoration(
-            color: Colors.indigo[800],
-            border: Border.all(
-              width: 2.0,
-              color: Colors.indigoAccent,
-            ),
-            borderRadius: const BorderRadius.all(Radius.circular(10.0))),
-        child: drawBlocks(),
+    return GestureDetector(
+      onHorizontalDragUpdate: (details) {
+        action =
+            details.delta.dx > 0 ? BlockMovement.RIGHT : BlockMovement.LEFT;
+      },
+      onTap: () {
+        action = BlockMovement.ROTATE_CLOCKWISE;
+      },
+      child: AspectRatio(
+        aspectRatio: BLOCKS_X / BLOCKS_Y,
+        child: Container(
+          key: _keyGameArea,
+          decoration: BoxDecoration(
+              color: Colors.indigo[800],
+              border: Border.all(
+                width: GAME_AREA_BORDER_WIDTH,
+                color: Colors.indigoAccent,
+              ),
+              borderRadius: const BorderRadius.all(Radius.circular(10.0))),
+          child: drawBlocks(),
+        ),
       ),
     );
   }

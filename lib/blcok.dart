@@ -19,7 +19,7 @@ class Block {
 
   Block(this.orientations, Color color, this.orientationIndex) {
     x = 3;
-    y = -width - 1;
+    y = -height;
     this.color = color;
   }
 
@@ -32,7 +32,7 @@ class Block {
   }
 
   // get color {
-  //   return orientations[0][0];
+  //   return orientations[0][0].color;
   // }
 
   get subBlocks {
@@ -121,7 +121,7 @@ class OBlock extends Block {
           [SubBlock(0, 0), SubBlock(1, 0), SubBlock(0, 1), SubBlock(1, 1)],
           [SubBlock(0, 0), SubBlock(1, 0), SubBlock(0, 1), SubBlock(1, 1)],
           [SubBlock(0, 0), SubBlock(1, 0), SubBlock(0, 1), SubBlock(1, 1)],
-          [SubBlock(2, 0), SubBlock(1, 0), SubBlock(0, 1), SubBlock(1, 1)]
+          [SubBlock(0, 0), SubBlock(1, 0), SubBlock(0, 1), SubBlock(1, 1)]
         ], Colors.blue, orientationIndex);
 }
 
