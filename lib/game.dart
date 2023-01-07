@@ -32,6 +32,8 @@ class GameState extends State<Game> {
   late Timer timer;
   bool isPlaying = false;
   List<SubBlock> oldSubBlocks = <SubBlock>[];
+  int score = 0;
+  bool isGameOver = false;
 
   Block getNewBlock() {
     int blockType = Random().nextInt(7);
@@ -119,7 +121,11 @@ class GameState extends State<Game> {
         block?.move(BlockMovement.DOWN);
       }
 
-      if (status == Collision.LANDED || status == Collision.LANDED_BLOCK) {
+      if (status == Collision.LANDED_BLOCK && (block?.y)! < 0) {
+        isGameOver = true;
+        endGame();
+      } else if (status == Collision.LANDED ||
+          status == Collision.LANDED_BLOCK) {
         block?.subBlocks.forEach((subBlock) {
           subBlock.x += block?.x;
           subBlock.y += block?.y;
@@ -129,7 +135,46 @@ class GameState extends State<Game> {
       }
 
       action = null;
+      updateScore();
     });
+  }
+
+  void updateScore() {
+    var combo = 1;
+    Map<int, int> rows = {};
+    List<int> rowsToBeRemoved = [];
+
+    for (var subBlock in oldSubBlocks) {
+      rows.update(
+        subBlock.y,
+        (value) => ++value,
+        ifAbsent: () => 1,
+      );
+    }
+
+    rows.forEach((rowNum, count) {
+      if (count == BLOCKS_X) {
+        score += combo++;
+        debugPrint('score: $score');
+        rowsToBeRemoved.add(rowNum);
+      }
+    });
+
+    if (rowsToBeRemoved.isNotEmpty) {
+      removeRows(rowsToBeRemoved);
+    }
+  }
+
+  void removeRows(List<int> rowsToBeRemoved) {
+    rowsToBeRemoved.sort();
+    for (var rowNum in rowsToBeRemoved) {
+      oldSubBlocks.removeWhere((subBlock) => subBlock.y == rowNum);
+      for (var subBlock in oldSubBlocks) {
+        if (subBlock.y < rowNum) {
+          ++subBlock.y;
+        }
+      }
+    }
   }
 
   void startGame() {
@@ -184,10 +229,34 @@ class GameState extends State<Game> {
           oldSubBlock.color, oldSubBlock.x, oldSubBlock.y));
     }
 
+    if (isGameOver) {
+      subBlocks.add(getGameOverRect());
+    }
+
     // debugPrint('drawBlocks: ${subBlocks[0].left}-${subBlocks[0].top}');
     return Stack(
       children: subBlocks,
     );
+  }
+
+  Positioned getGameOverRect() {
+    return Positioned(
+        left: subBlockWidth * 1.0,
+        top: subBlockWidth * 6.0,
+        child: Container(
+          width: subBlockWidth * 8.0,
+          height: subBlockWidth * 3.0,
+          alignment: Alignment.center,
+          decoration: const BoxDecoration(
+            color: Colors.red,
+            borderRadius: BorderRadius.all(Radius.circular(10.0)),
+          ),
+          child: const Text(
+            'Game Over',
+            style: TextStyle(
+                fontSize: 30, fontWeight: FontWeight.bold, color: Colors.white),
+          ),
+        ));
   }
 
   @override
