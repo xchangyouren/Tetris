@@ -2,8 +2,14 @@ import 'package:flutter/material.dart';
 import 'score_bar.dart';
 import 'game.dart';
 import 'next_block.dart';
+import 'package:provider/provider.dart';
 
-void main() => runApp(const MyApp());
+void main() => runApp(
+      ChangeNotifierProvider(
+        create: (context) => Data(),
+        child: const MyApp(),
+      ),
+    );
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -63,8 +69,8 @@ class _TetrisState extends State<Tetris> {
                             ElevatedButton(
                                 onPressed: () {
                                   setState(() {
-                                    _keyGame.currentState != null &&
-                                            _keyGame.currentState!.isPlaying
+                                    Provider.of<Data>(context, listen: false)
+                                            .isPlaying
                                         ? _keyGame.currentState!.endGame()
                                         : _keyGame.currentState!.startGame();
                                   });
@@ -72,8 +78,8 @@ class _TetrisState extends State<Tetris> {
                                 style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.indigo[700]),
                                 child: Text(
-                                  _keyGame.currentState != null &&
-                                          _keyGame.currentState!.isPlaying
+                                  Provider.of<Data>(context, listen: false)
+                                          .isPlaying
                                       ? 'End'
                                       : 'Start',
                                   style: TextStyle(
@@ -87,5 +93,25 @@ class _TetrisState extends State<Tetris> {
         ),
       ),
     );
+  }
+}
+
+class Data with ChangeNotifier {
+  int score = 0;
+  bool isPlaying = false;
+
+  void setScore(int score) {
+    this.score = score;
+    notifyListeners();
+  }
+
+  void addScore(int score) {
+    this.score += score;
+    notifyListeners();
+  }
+
+  void setIsPlaying(bool isPlaying) {
+    this.isPlaying = isPlaying;
+    notifyListeners();
   }
 }

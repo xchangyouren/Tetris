@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:my_tetris/blcok.dart';
 import 'dart:math';
 import 'dart:async';
+import 'main.dart';
+import 'package:provider/provider.dart';
 
 import 'package:my_tetris/sub_block.dart';
 
@@ -30,9 +32,7 @@ class GameState extends State<Game> {
   BlockMovement? action;
   Block? block;
   late Timer timer;
-  bool isPlaying = false;
   List<SubBlock> oldSubBlocks = <SubBlock>[];
-  int score = 0;
   bool isGameOver = false;
 
   Block getNewBlock() {
@@ -154,8 +154,7 @@ class GameState extends State<Game> {
 
     rows.forEach((rowNum, count) {
       if (count == BLOCKS_X) {
-        score += combo++;
-        debugPrint('score: $score');
+        Provider.of<Data>(context, listen: false).addScore(combo++);
         rowsToBeRemoved.add(rowNum);
       }
     });
@@ -178,7 +177,7 @@ class GameState extends State<Game> {
   }
 
   void startGame() {
-    isPlaying = true;
+    Provider.of<Data>(context, listen: false).setIsPlaying(true);
     RenderBox renderBoxGame =
         _keyGameArea.currentContext?.findRenderObject() as RenderBox;
     Offset position = renderBoxGame.localToGlobal(Offset.zero);
@@ -192,7 +191,7 @@ class GameState extends State<Game> {
   }
 
   void endGame() {
-    isPlaying = false;
+    Provider.of<Data>(context, listen: false).setIsPlaying(false);
     timer.cancel();
     debugPrint('timer cancel');
   }
