@@ -31,9 +31,9 @@ class Block {
     }
   }
 
-  // get color {
-  //   return orientations[0][0].color;
-  // }
+  Color get color {
+    return orientations[0][0].color;
+  }
 
   get subBlocks {
     return orientations[orientationIndex];

@@ -131,7 +131,8 @@ class GameState extends State<Game> {
           subBlock.y += block?.y;
           oldSubBlocks.add(subBlock);
         });
-        block = getNewBlock();
+        block = Provider.of<Data>(context, listen: false).nextBlock;
+        Provider.of<Data>(context, listen: false).setNextBlock(getNewBlock());
       }
 
       action = null;
@@ -186,6 +187,7 @@ class GameState extends State<Game> {
     subBlockWidth =
         (renderBoxGame.size.width - GAME_AREA_BORDER_WIDTH * 2) / BLOCKS_X;
     block ??= getNewBlock();
+    Provider.of<Data>(context, listen: false).setNextBlock(getNewBlock());
     // debugPrint('subBlockWidth: $subBlockWidth, ${block?.x}-${block?.y}');
     timer = Timer.periodic(duration, onPlay);
   }

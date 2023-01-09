@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'main.dart';
+import 'package:provider/provider.dart';
 
 class NextBlock extends StatefulWidget {
   const NextBlock({super.key});
@@ -31,6 +33,9 @@ class _NextBlockState extends State<NextBlock> {
             aspectRatio: 1,
             child: Container(
               color: Colors.indigo[600],
+              child: Center(
+                child: Provider.of<Data>(context).getNextBlockWidget(),
+              ),
             ),
           )
         ],

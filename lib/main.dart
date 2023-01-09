@@ -3,6 +3,8 @@ import 'score_bar.dart';
 import 'game.dart';
 import 'next_block.dart';
 import 'package:provider/provider.dart';
+import 'blcok.dart';
+import 'package:flutter/services.dart';
 
 void main() => runApp(
       ChangeNotifierProvider(
@@ -16,6 +18,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     return const MaterialApp(home: Tetris());
   }
 }
@@ -99,6 +102,7 @@ class _TetrisState extends State<Tetris> {
 class Data with ChangeNotifier {
   int score = 0;
   bool isPlaying = false;
+  late Block nextBlock;
 
   void setScore(int score) {
     this.score = score;
@@ -113,5 +117,47 @@ class Data with ChangeNotifier {
   void setIsPlaying(bool isPlaying) {
     this.isPlaying = isPlaying;
     notifyListeners();
+  }
+
+  void setNextBlock(nextBlock) {
+    this.nextBlock = nextBlock;
+    notifyListeners();
+  }
+
+  Widget getNextBlockWidget() {
+    if (!isPlaying) {
+      return Container();
+    }
+    var width = nextBlock.width;
+    var height = nextBlock.height;
+    Color color;
+
+    List<Widget> columns = [];
+    for (var y = 0; y < height; y++) {
+      List<Widget> rows = [];
+      for (var x = 0; x < width; x++) {
+        if (nextBlock.subBlocks
+                .where((subBlock) => subBlock.x == x && subBlock.y == y)
+                .length >
+            0) {
+          color = nextBlock.color;
+        } else {
+          color = Colors.transparent;
+        }
+        rows.add(Container(
+          width: 12,
+          height: 12,
+          color: color,
+        ));
+      }
+      columns.add(Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: rows,
+      ));
+    }
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: columns,
+    );
   }
 }
