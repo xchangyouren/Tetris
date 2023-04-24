@@ -5,6 +5,7 @@ import 'next_block.dart';
 import 'package:provider/provider.dart';
 import 'blcok.dart';
 import 'package:flutter/services.dart';
+import 'control_panel.dart';
 
 void main() => runApp(
       ChangeNotifierProvider(
@@ -83,7 +84,7 @@ class _TetrisState extends State<Tetris> {
                                 child: Text(
                                   Provider.of<Data>(context, listen: false)
                                           .isPlaying
-                                      ? 'End'
+                                      ? 'Pause'
                                       : 'Start',
                                   style: TextStyle(
                                       fontSize: 18, color: Colors.grey[200]),
@@ -91,7 +92,8 @@ class _TetrisState extends State<Tetris> {
                           ],
                         ))),
               ],
-            )))
+            ))),
+            const ControlPanel(),
           ],
         ),
       ),
@@ -103,6 +105,14 @@ class Data with ChangeNotifier {
   int score = 0;
   bool isPlaying = false;
   late Block nextBlock;
+  BlockMovement? _nextAction;
+
+  BlockMovement? get nextAction => _nextAction;
+
+  set nextAction(BlockMovement? value) {
+    _nextAction = value;
+    notifyListeners();
+  }
 
   void setScore(int score) {
     this.score = score;

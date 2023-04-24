@@ -77,13 +77,17 @@ class GameState extends State<Game> {
 
   bool checkOnEdge(BlockMovement action) {
     return action == BlockMovement.LEFT && (block?.x)! <= 0 ||
-        action == BlockMovement.RIGHT && (block?.x)! + block?.width >= BLOCKS_X;
+        action == BlockMovement.RIGHT &&
+            (block?.x)! + block?.width >= BLOCKS_X ||
+        action == BlockMovement.ROTATE_CLOCKWISE &&
+            ((block?.x)! + block?.width >= BLOCKS_X || (block?.x)! <= 0);
   }
 
   void onPlay(Timer timer) {
     // debugPrint('onPlay called ${timer.tick}');
     var status = Collision.NONE;
     setState(() {
+      action = Provider.of<Data>(context, listen: false).nextAction;
       if (action != null && !checkOnEdge(action!)) {
         block?.move(action!);
       }
@@ -136,6 +140,7 @@ class GameState extends State<Game> {
       }
 
       action = null;
+      Provider.of<Data>(context, listen: false).nextAction = null;
       updateScore();
     });
   }
@@ -262,27 +267,18 @@ class GameState extends State<Game> {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onHorizontalDragUpdate: (details) {
-        action =
-            details.delta.dx > 0 ? BlockMovement.RIGHT : BlockMovement.LEFT;
-      },
-      onTap: () {
-        action = BlockMovement.ROTATE_CLOCKWISE;
-      },
-      child: AspectRatio(
-        aspectRatio: BLOCKS_X / BLOCKS_Y,
-        child: Container(
-          key: _keyGameArea,
-          decoration: BoxDecoration(
-              color: Colors.indigo[800],
-              border: Border.all(
-                width: GAME_AREA_BORDER_WIDTH,
-                color: Colors.indigoAccent,
-              ),
-              borderRadius: const BorderRadius.all(Radius.circular(10.0))),
-          child: drawBlocks(),
-        ),
+    return AspectRatio(
+      aspectRatio: BLOCKS_X / BLOCKS_Y,
+      child: Container(
+        key: _keyGameArea,
+        decoration: BoxDecoration(
+            color: Colors.indigo[800],
+            border: Border.all(
+              width: GAME_AREA_BORDER_WIDTH,
+              color: Colors.indigoAccent,
+            ),
+            borderRadius: const BorderRadius.all(Radius.circular(10.0))),
+        child: drawBlocks(),
       ),
     );
   }
